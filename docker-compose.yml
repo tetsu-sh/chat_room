@@ -9,7 +9,6 @@ services:
       - '3000:3000'
     volumes:
       - ./:/usr/src/app
-      - /usr/src/app/node_modules
     depends_on:
       - db
     command: pnpm run start:dev
@@ -22,3 +21,10 @@ services:
       MYSQL_PASSWORD: password
     ports:
       - '3306:3306'
+    volumes:
+      - db-store:/var/lib/mysql
+      - './db/my.cnf:/etc/mysql/conf.d/my.cnf'
+      - './db/setup.sql:/docker-entrypoint-initdb.d/setup.sql'
+
+volumes:
+  db-store:
