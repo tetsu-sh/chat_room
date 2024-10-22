@@ -43,6 +43,9 @@ describe('UserController (e2e)', () => {
     userRepository.clear();
     await app.init();
   });
+  afterAll(async () => {
+    await app.close();
+  });
 
   it('/user/login (POST)', async () => {
     const req = new LoginRequest();
