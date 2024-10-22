@@ -30,6 +30,7 @@ describe('UserController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
     userRepository = moduleFixture.get<Repository<User>>(
       getRepositoryToken(User),
     );
@@ -37,16 +38,15 @@ describe('UserController (e2e)', () => {
   });
 
   it('/user/login (POST)', async () => {
-    const req = new Login();
+    const req = new LoginRequest();
     req.nickName = faker.person.firstName();
     const res = await request(app.getHttpServer())
       .post('/user/login')
       .send(req)
       .expect(HttpStatus.CREATED);
-    console.log(res.body.id);
-    // userRepository.findOne({ where: { id: res.body.id } }).then((user) => {
-    //   expect(user).toBeDefined();
-    //   expect(user.nickName).toBe(name);
-    // });
+    userRepository.findOne({ where: { id: res.body.id } }).then((user) => {
+      expect(user).toBeDefined();
+      expect(user.nickName).toBe(req.nickName);
+    });
   });
 });
