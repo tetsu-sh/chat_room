@@ -1,15 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpStatus, INestApplication } from '@nestjs/common';
+import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { User } from '../src/infra/user/user.entity';
 import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { UserUsecase } from '../src/usecase/userUsecase';
 import { UsersModule } from '../src/users.module';
-import { AppModule } from '../src/app.module';
-import { Login } from '../src/presentation/request/login';
+import { LoginRequest } from '../src/presentation/request/loginRequest';
 
 describe('UserController (e2e)', () => {
   let app: INestApplication;
@@ -20,9 +18,17 @@ describe('UserController (e2e)', () => {
     moduleFixture = await Test.createTestingModule({
       imports: [
         UsersModule,
+        ConfigModule.forRoot({
+          envFilePath: '.env.test',
+          isGlobal: true,
+        }),
         TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
+          type: 'mysql',
+          host: process.env.DATABASE_HOST,
+          port: Number(process.env.DATABASE_PORT),
+          username: process.env.DATABASE_USER,
+          password: process.env.DATABASE_PASSWORD,
+          database: process.env.DATABASE_NAME,
           entities: [User],
           synchronize: true,
         }),
