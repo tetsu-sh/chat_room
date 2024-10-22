@@ -40,6 +40,7 @@ describe('UserController (e2e)', () => {
     userRepository = moduleFixture.get<Repository<User>>(
       getRepositoryToken(User),
     );
+    userRepository.clear();
     await app.init();
   });
 
