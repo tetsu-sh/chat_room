@@ -5,26 +5,25 @@ import {
   OneToOne,
   JoinColumn,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { User } from '../user/user.entity';
 import { BaseEntity } from '../shared/base.entity';
-import { Message } from './messages.entity';
+import { ChatRoom } from './chatRoom.entity';
 
 @Entity()
-export class ChatRoom extends BaseEntity {
+export class Message extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ unique: true })
-  name: string;
+  content: string;
 
-  @OneToOne(() => User)
+  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.messages)
+  @JoinColumn({ name: 'chatRoom_id' })
+  chatRoom: ChatRoom;
+
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'owner_id' })
   user: User;
-
-  @OneToMany(() => User, (user) => user.chatRoom)
-  members: User[];
-
-  @OneToMany(() => Message, (message) => message.chatRoom)
-  messages: Message[];
 }

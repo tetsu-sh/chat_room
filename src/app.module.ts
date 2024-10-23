@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users.module';
 import { TypeOrmNamingStrategy } from './config/TypeOrmNamingStrategy';
+import { ChatRoomModule } from './chatRoom.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TypeOrmNamingStrategy } from './config/TypeOrmNamingStrategy';
       namingStrategy: new TypeOrmNamingStrategy(),
     }),
     UsersModule,
+    ChatRoomModule,
   ],
 })
 export class AppModule {}

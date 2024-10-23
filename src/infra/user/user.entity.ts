@@ -1,5 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToOne,
+  ManyToOne,
+} from 'typeorm';
 import { BaseEntity } from '../shared/base.entity';
+import { ChatRoom } from '../chatRoom/chatRoom.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -8,4 +15,7 @@ export class User extends BaseEntity {
 
   @Column({ unique: true })
   nickName: string;
+
+  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.user)
+  chatRoom: ChatRoom;
 }

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
-import { UserUsecase } from '../usecase/userUsecase';
+import { UserUsecase } from '../../usecase/userUsecase';
 import { LoginRequest } from './request/loginRequest';
 import { LoginResponse } from './response/loginResponse';
 

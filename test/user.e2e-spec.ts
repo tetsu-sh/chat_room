@@ -7,7 +7,7 @@ import { User } from '../src/infra/user/user.entity';
 import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { UsersModule } from '../src/users.module';
-import { LoginRequest } from '../src/presentation/request/loginRequest';
+import { LoginRequest } from '../src/presentation/user/request/loginRequest';
 import { TypeOrmNamingStrategy } from '../src/config/TypeOrmNamingStrategy';
 
 describe('UserController (e2e)', () => {
