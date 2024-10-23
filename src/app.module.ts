@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users.module';
+import { TypeOrmNamingStrategy } from './config/TypeOrmNamingStrategy';
 
 @Module({
   imports: [
@@ -18,8 +19,7 @@ import { UsersModule } from './users.module';
       database: process.env.DATABASE_NAME,
       entities: ['dist/**/*.entity.{ts,js}'],
       migrations: ['dist/migrations/*.{ts,js}'],
-      autoLoadEntities: true,
-      synchronize: true,
+      namingStrategy: new TypeOrmNamingStrategy(),
     }),
     UsersModule,
   ],

@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { UsersModule } from '../src/users.module';
 import { LoginRequest } from '../src/presentation/request/loginRequest';
+import { TypeOrmNamingStrategy } from '../src/config/TypeOrmNamingStrategy';
 
 describe('UserController (e2e)', () => {
   let app: INestApplication;
@@ -31,6 +32,7 @@ describe('UserController (e2e)', () => {
           database: process.env.DATABASE_NAME,
           entities: [User],
           synchronize: true,
+          namingStrategy: new TypeOrmNamingStrategy(),
         }),
       ],
     }).compile();
