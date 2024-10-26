@@ -4,6 +4,8 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   ManyToOne,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { BaseEntity } from '../shared/base.entity';
 import { ChatRoom } from '../chatRoom/chatRoom.entity';
@@ -16,6 +18,10 @@ export class User extends BaseEntity {
   @Column({ unique: true })
   nickName: string;
 
-  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.user)
-  chatRoom: ChatRoom;
+  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.members)
+  @JoinColumn()
+  joinedRoom: ChatRoom | null;
+
+  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.owner)
+  ownedRooms: ChatRoom[];
 }
