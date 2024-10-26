@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../infra/user/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import uuid from 'ui7';
 import { ChatRoom } from 'src/infra/chatRoom/chatRoom.entity';
 import { Message } from 'src/infra/chatRoom/messages.entity';
@@ -21,6 +21,8 @@ export class ChatRoomUsecase {
     private readonly messageArchRepository: Repository<MessageArch>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async createRoom(user_id: string): Promise<string> {
@@ -71,8 +73,14 @@ export class ChatRoomUsecase {
         HttpStatus.FORBIDDEN,
       );
     }
+    await this.archiveChatRoom(chatRoom);
+  }
+
+  async archiveChatRoom(chatRoom: ChatRoom): Promise<void> {
+    // Logical deletion with data migration to archive table
+
     const messages = await this.messageRepository.find({
-      where: { chatRoom: { id: roomId } },
+      where: { chatRoom: { id: chatRoom.id } },
       relations: ['user'],
     });
     const chatRoomArch = this.chatRoomArchRepository.create(chatRoom);
@@ -81,10 +89,28 @@ export class ChatRoomUsecase {
         return { ...message, chatRoom: chatRoomArch };
       }),
     );
-    await this.chatRoomArchRepository.save(chatRoomArch);
-    await this.messageArchRepository.save(messageArches);
 
-    await this.messageRepository.delete({ chatRoom: { id: chatRoom.id } });
-    await this.chatRoomRepository.delete({ id: chatRoom.id });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await queryRunner.manager.save(ChatRoomArch, chatRoomArch);
+      await queryRunner.manager.save(MessageArch, messageArches);
+      await queryRunner.manager.delete(Message, {
+        chatRoom: { id: chatRoom.id },
+      });
+      await queryRunner.manager.delete(ChatRoom, { id: chatRoom.id });
+
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      console.log(e);
+      throw new HttpException(
+        'Failed to delete chat room',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
