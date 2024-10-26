@@ -112,20 +112,7 @@
           // 編集ボタンを追加
           if (message.userId === currentUserId) {
             // 自分のメッセージの場合のみ編集ボタンを表示
-            const editButton = document.createElement('button');
-            editButton.textContent = 'Edit';
-            editButton.onclick = () => {
-              const newContent = prompt('Edit your message:', message.content);
-              if (newContent) {
-                console.log('Edit message:', message.id, newContent);
-                socket.emit('editMessage', {
-                  roomId: document.getElementById('roomId').value,
-                  userId: message.userId,
-                  content: newContent,
-                  messageId: message.id,
-                });
-              }
-            };
+            const editButton = creteEditButton(message);
             messageElement.appendChild(editButton);
           }
           messagesDiv.appendChild(messageElement);
@@ -148,29 +135,35 @@
         const messagesDiv = document.getElementById('messages');
         const messageElement = document.createElement('div');
         messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
+        messageElement.id = message.id; // メッセージのIDを設定
         const currentUserId = document.getElementById('userId').value; // 現在のユーザーIDを取得
 
         // 編集ボタンを追加
         if (message.userId === currentUserId) {
           // 自分のメッセージの場合のみ編集ボタンを表示
-          const editButton = document.createElement('button');
-          editButton.textContent = 'Edit';
-          editButton.onclick = () => {
-            const newContent = prompt('Edit your message:', message.content);
-            if (newContent) {
-              console.log('Edit message:', message.id, newContent);
-              socket.emit('editMessage', {
-                roomId: document.getElementById('roomId').value,
-                userId: message.userId,
-                content: newContent,
-                messageId: message.id,
-              });
-            }
-          };
+          const editButton = creteEditButton(message);
           messageElement.appendChild(editButton);
         }
         messagesDiv.appendChild(messageElement);
       });
+
+      function creteEditButton(message) {
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit';
+        editButton.onclick = () => {
+          const newContent = prompt('Edit your message:', message.content);
+          if (newContent) {
+            console.log('Edit message:', message.id, newContent);
+            socket.emit('editMessage', {
+              roomId: document.getElementById('roomId').value,
+              userId: message.userId,
+              content: newContent,
+              messageId: message.id,
+            });
+          }
+        };
+        return editButton;
+      }
 
       // メッセージが更新されたとき
       socket.on('messageUpdated', (updatedMessage) => {
@@ -186,23 +179,7 @@
             // 編集ボタンを追加
             if (updatedMessage.userId === currentUserId) {
               // 自分のメッセージの場合のみ編集ボタンを表示
-              const editButton = document.createElement('button');
-              editButton.textContent = 'Edit';
-              editButton.onclick = () => {
-                const newContent = prompt(
-                  'Edit your message:',
-                  updatedMessage.content,
-                );
-                if (newContent) {
-                  console.log('Edit message:', updatedMessage.id, newContent);
-                  socket.emit('editMessage', {
-                    roomId: document.getElementById('roomId').value,
-                    userId: updatedMessage.userId,
-                    content: newContent,
-                    messageId: updatedMessage.id,
-                  });
-                }
-              };
+              const editButton = creteEditButton(updatedMessage);
               messageElement.appendChild(editButton);
             }
             break;
