@@ -25,17 +25,28 @@ export class ChatRoomUsecase {
     private readonly dataSource: DataSource,
   ) {}
 
-  async createRoom(user_id: string): Promise<string> {
+  async createRoom(user_id: string, name: string): Promise<string> {
     var chatRoom = new ChatRoom();
     chatRoom.id = uuid();
-    chatRoom.name = 'room' + chatRoom.id;
-    try {
-      chatRoom.owner = await this.userRepository.findOne({
-        where: { id: user_id },
-      });
-    } catch (e) {
-      console.log(e);
+    chatRoom.name = name;
+    var owner = await this.userRepository.findOne({
+      where: { id: user_id },
+    });
+    var existChatRoom = await this.chatRoomRepository.findOne({
+      where: { name: name },
+    });
+    if (existChatRoom) {
+      throw new HttpException(
+        'Chat room already exists',
+        HttpStatus.BAD_REQUEST,
+      );
     }
+
+    if (!owner) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    chatRoom.owner = owner;
+
     await this.chatRoomRepository.save(chatRoom);
     return chatRoom.id;
   }
