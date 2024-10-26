@@ -3,12 +3,14 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { User } from '../src/infra/user/user.entity';
+import { User } from 'src/infra/user/user.entity';
 import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { UsersModule } from '../src/users.module';
-import { LoginRequest } from '../src/presentation/user/request/loginRequest';
-import { TypeOrmNamingStrategy } from '../src/config/TypeOrmNamingStrategy';
+import { UsersModule } from 'src/users.module';
+import { LoginRequest } from 'src/presentation/user/request/loginRequest';
+import { TypeOrmNamingStrategy } from 'src/config/TypeOrmNamingStrategy';
+import { ChatRoom } from 'src/infra/chatRoom/chatRoom.entity';
+import { Message } from 'src/infra/chatRoom/messages.entity';
 
 describe('UserController (e2e)', () => {
   let app: INestApplication;
@@ -30,7 +32,7 @@ describe('UserController (e2e)', () => {
           username: process.env.DATABASE_USER,
           password: process.env.DATABASE_PASSWORD,
           database: process.env.DATABASE_NAME,
-          entities: [User],
+          entities: [User, ChatRoom, Message],
           synchronize: true,
           namingStrategy: new TypeOrmNamingStrategy(),
         }),
@@ -42,7 +44,7 @@ describe('UserController (e2e)', () => {
     userRepository = moduleFixture.get<Repository<User>>(
       getRepositoryToken(User),
     );
-    userRepository.clear();
+    // userRepository.clear();
     await app.init();
   });
   afterAll(async () => {

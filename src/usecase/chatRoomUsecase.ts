@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../infra/user/user.entity';
+import { User } from 'src/infra/user/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import uuid from 'ui7';
 import { ChatRoom } from 'src/infra/chatRoom/chatRoom.entity';
@@ -41,7 +41,6 @@ export class ChatRoomUsecase {
         HttpStatus.BAD_REQUEST,
       );
     }
-
     if (!owner) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
