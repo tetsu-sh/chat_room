@@ -15,12 +15,16 @@ import { ChatRoomModule } from '../src/chatRoom.module';
 import { AppModule } from '../src/app.module';
 import { ChatRoomArch } from '../src/infra/chatRoom/chatRoomArch.entity';
 import { MessageArch } from '../src/infra/chatRoom/messagesArch.entity';
+import { DeleteChatRoomRequest } from 'src/presentation/chatRoom/request/deleteChatRoomRequest';
+import { createChatRoom } from './util/createChatRoom';
 
 describe('ChatRoomController (e2e)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let userRepository: Repository<User>;
   let chatRoomRepository: Repository<ChatRoom>;
+  let chatRoomArchRepository: Repository<ChatRoomArch>;
+  let messageRepository: Repository<Message>;
 
   beforeEach(async () => {
     moduleFixture = await Test.createTestingModule({
@@ -52,9 +56,19 @@ describe('ChatRoomController (e2e)', () => {
     chatRoomRepository = moduleFixture.get<Repository<ChatRoom>>(
       getRepositoryToken(ChatRoom),
     );
-    // userRepository.clear();
-    // chatRoomRepository.clear();
+    messageRepository = moduleFixture.get<Repository<Message>>(
+      getRepositoryToken(Message),
+    );
+    chatRoomArchRepository = moduleFixture.get<Repository<ChatRoomArch>>(
+      getRepositoryToken(ChatRoomArch),
+    );
     await app.init();
+  });
+  afterEach(async () => {
+    await messageRepository.delete({});
+    await chatRoomArchRepository.delete({});
+    await chatRoomRepository.delete({});
+    await userRepository.delete({});
   });
   afterAll(async () => {
     await app.close();
@@ -65,7 +79,6 @@ describe('ChatRoomController (e2e)', () => {
     const req = new CreateChatRoomRequest();
     req.name = faker.lorem.word() + faker.lorem.word();
     req.userId = user.id;
-    console.log(req);
     const res = await request(app.getHttpServer())
       .post('/chatRoom')
       .send(req)
@@ -80,5 +93,36 @@ describe('ChatRoomController (e2e)', () => {
     const res = await request(app.getHttpServer())
       .get('/chatRoom')
       .expect(HttpStatus.OK);
+  });
+
+  it('/chatRoom/:id/members (GET)', async () => {
+    var owner = await createUser(userRepository);
+    var room = await createChatRoom(chatRoomRepository, owner);
+    var user = await createUser(userRepository);
+    await chatRoomRepository.save(room);
+    await userRepository.save(user);
+    const res = await request(app.getHttpServer())
+      .get('/chatRoom/' + room.id + '/members')
+      .expect(HttpStatus.OK);
+    res.body.forEach((member) => {
+      expect(member.id).toBe(user.id);
+    });
+    user.joinedRoom = null;
+    await userRepository.save(user);
+  });
+
+  it('/chatRoom (DELETE)', async () => {
+    var owner = await createUser(userRepository);
+    var room = await createChatRoom(chatRoomRepository, owner);
+    var req = new DeleteChatRoomRequest();
+    req.roomId = room.id;
+    req.userId = owner.id;
+    const res = await request(app.getHttpServer())
+      .delete('/chatRoom')
+      .send(req)
+      .expect(HttpStatus.OK);
+    chatRoomRepository.findOne({ where: { id: room.id } }).then((room) => {
+      expect(room).toBeNull();
+    });
   });
 });
