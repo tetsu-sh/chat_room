@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Chat Client</title>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script
+      src="https://cdn.socket.io/4.8.0/socket.io.min.js"
+      integrity="sha384-OoIbkvzsFFQAG88r+IqMAjyOtYDPGO0cqK5HF5Uosdy/zUEGySeAzytENMDynREd"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Socket.IOのクライアントライブラリ -->
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      #messages {
+        border: 1px solid #ccc;
+        padding: 10px;
+        height: 300px;
+        overflow-y: scroll;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Chat Room</h1>
+    <div>
+      <label for="roomId">Room ID:</label>
+      <!-- <input type="text" id="roomId" placeholder="Enter room ID" /> -->
+      <select name="room" id="roomId"></select>
+    </div>
+    <div>
+      <label for="userId">User ID:</label>
+      <input type="text" id="userId" placeholder="Enter your user ID" />
+    </div>
+    <button id="joinButton">Join Room</button>
+
+    <div id="messages"></div>
+
+    <div>
+      <input type="text" id="messageInput" placeholder="Type your message" />
+      <button id="sendButton">Send Message</button>
+    </div>
+    <div id="members">
+      <h2>Members</h2>
+      <ul id="memberList"></ul>
+      <!-- メンバー一覧を表示するリスト -->
+    </div>
+
+    <script>
+      const socket = io('ws://localhost:3001'); // サーバーのURLを指定
+      const url = 'http://localhost:3333';
+      //   const axios = axios;
+      //   const axios = require('axios/dist/browser/axios.cjs');
+
+      // エラーハンドリング
+      socket.on('error', (error) => {
+        console.error('Error from server:', error.message);
+        alert(error.message); // エラーメッセージをアラートで表示
+      });
+
+      // ルームに参加する
+      document.getElementById('joinButton').addEventListener('click', () => {
+        const roomId = document.getElementById('roomId').value;
+        const userId = document.getElementById('userId').value;
+        socket.emit('joinRoom', { roomId, userId });
+      });
+
+      // ルームデータを受信
+      socket.on('roomData', (data) => {
+        console.log('roomData:', data);
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = ''; // 既存のメッセージをクリア
+        data.messages.forEach((message) => {
+          const messageElement = document.createElement('div');
+          messageElement.textContent = message.content; // メッセージの内容を表示
+          messagesDiv.appendChild(messageElement);
+        });
+      });
+
+      // ルームの更新を受信
+      socket.on('roomUpdate', (nickName) => {
+        console.log('roomUpdate:', nickName);
+        const messagesDiv = document.getElementById('messages');
+        const updateElement = document.createElement('div');
+        updateElement.textContent = `${nickName} has joined the room.`;
+        messagesDiv.appendChild(updateElement);
+        fetchRoomMembers(document.getElementById('roomId').value);
+      });
+
+      // メッセージを受信
+      socket.on('receiveMessage', (content) => {
+        console.log('New message:', content);
+        const messagesDiv = document.getElementById('messages');
+        const messageElement = document.createElement('div');
+        messageElement.textContent = content; // 新しいメッセージを表示
+        messagesDiv.appendChild(messageElement);
+      });
+
+      // メッセージを送信する
+      document.getElementById('sendButton').addEventListener('click', () => {
+        const roomId = document.getElementById('roomId').value;
+        const userId = document.getElementById('userId').value;
+        const content = document.getElementById('messageInput').value;
+        socket.emit('putMessage', { roomId, userId, content });
+        document.getElementById('messageInput').value = ''; // 入力フィールドをクリア
+      });
+
+      // ルームから退出する
+      function leaveRoom() {
+        const roomId = document.getElementById('roomId').value;
+        const userId = document.getElementById('userId').value;
+        socket.emit('leaveRoom', { roomId, userId });
+      }
+
+      // ページが閉じられる前にleaveRoomを呼び出す
+      window.addEventListener('beforeunload', leaveRoom);
+      // ページ再読み時にleaveRoomを呼び出す
+      window.addEventListener('unload', leaveRoom);
+
+      //   room一覧を取得
+      async function fetchChatRooms() {
+        const res = await axios.get(`${url}/chatRoom`);
+        const chatRooms = res.data;
+        console.log(chatRooms);
+        // selectタグにオプションを追加
+        const roomSelect = document.getElementById('roomId');
+        roomSelect.innerHTML = ''; // 既存のオプションをクリア
+        chatRooms.forEach((room) => {
+          const option = document.createElement('option');
+          option.value = room.id; // ルームのIDをvalueに設定
+          option.textContent = room.name; // ルームの名前を表示
+          roomSelect.appendChild(option); // selectタグにオプションを追加
+        });
+      }
+      // ルームのメンバーを取得
+      async function fetchRoomMembers(roomId) {
+        try {
+          const res = await axios.get(`${url}/chatRoom/${roomId}/members`);
+          const members = res.data;
+          const memberList = document.getElementById('memberList');
+          memberList.innerHTML = ''; // 既存のメンバーをクリア
+          members.forEach((member) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = member.nickName; // メンバーのニックネームを表示
+            memberList.appendChild(listItem); // メンバーリストに追加
+          });
+        } catch (error) {
+          console.error('Error fetching room members:', error.message);
+        }
+      }
+
+      window.onload = fetchChatRooms;
+    </script>
+  </body>
+</html>
