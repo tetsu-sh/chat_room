@@ -12,6 +12,12 @@ export class UserUsecase {
   ) {}
 
   async login(nickName: string): Promise<string> {
+    var existUser = await this.userRepository.findOne({
+      where: { nickName: nickName },
+    });
+    if (existUser) {
+      return existUser.id;
+    }
     const user = new User();
     user.id = uuid();
     user.nickName = nickName;
