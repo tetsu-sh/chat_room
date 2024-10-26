@@ -19,11 +19,13 @@ export class Message extends BaseEntity {
   @Column({ unique: false })
   content: string;
 
-  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.messages)
+  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.messages, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'chat_room_id' })
   chatRoom: ChatRoom;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'user_id' })
   user: User;
 }
