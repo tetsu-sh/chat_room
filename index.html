@@ -26,16 +26,20 @@
   </head>
   <body>
     <h1>Chat Room</h1>
-    <div>
+
+    <!-- ログインフォーム -->
+    <div id="loginForm">
+      <label for="nickName">Nick Name:</label>
+      <input type="text" id="nickName" placeholder="Enter your nickname" />
+      <button id="loginButton">Login</button>
+    </div>
+    <!-- room join -->
+    <div id="roomSelection">
       <label for="roomId">Room ID:</label>
       <!-- <input type="text" id="roomId" placeholder="Enter room ID" /> -->
       <select name="room" id="roomId"></select>
+      <button id="joinButton">Join Room</button>
     </div>
-    <div>
-      <label for="userId">User ID:</label>
-      <input type="text" id="userId" placeholder="Enter your user ID" />
-    </div>
-    <button id="joinButton">Join Room</button>
 
     <div id="messages"></div>
 
@@ -49,6 +53,11 @@
       <!-- メンバー一覧を表示するリスト -->
     </div>
 
+    <div id="currentUser" style="display: none"></div>
+    <!-- ニックネームを表示するための要素 -->
+    <!-- 隠しフィールドでユーザーIDを保持 -->
+    <input type="hidden" id="userId" />
+
     <script>
       const socket = io('ws://localhost:3001'); // サーバーのURLを指定
       const url = 'http://localhost:3333';
@@ -61,10 +70,32 @@
         alert(error.message); // エラーメッセージをアラートで表示
       });
 
+      // ログインボタンのクリックイベント
+      document
+        .getElementById('loginButton')
+        .addEventListener('click', async () => {
+          const nickName = document.getElementById('nickName').value;
+          const req = { nickName }; // ログインリクエスト
+          const res = await axios.post(`${url}/user/login`, req);
+          const userId = res.data.id; // サーバーから返されたユーザーIDを取得
+
+          // ユーザーIDを設定し、ルーム選択を表示
+          document.getElementById('userId').value = userId;
+          document.getElementById('roomSelection').style.display = 'block';
+          document.getElementById('loginForm').style.display = 'none';
+
+          // ニックネームを表示
+          const currentUserDiv = document.getElementById('currentUser');
+
+          currentUserDiv.textContent = `Logged in as: ${nickName}`;
+          currentUserDiv.style.display = 'block';
+        });
+
       // ルームに参加する
       document.getElementById('joinButton').addEventListener('click', () => {
         const roomId = document.getElementById('roomId').value;
-        const userId = document.getElementById('userId').value;
+        // const userId = document.getElementById('userId').value;
+        userId = document.getElementById('userId').value;
         socket.emit('joinRoom', { roomId, userId });
       });
 
