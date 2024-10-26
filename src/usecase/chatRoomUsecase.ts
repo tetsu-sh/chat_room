@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../infra/user/user.entity';
 import { Repository } from 'typeorm';
@@ -39,5 +39,22 @@ export class ChatRoomUsecase {
       relations: ['members'],
     });
     return chatRoom.members;
+  }
+
+  async deleteChatRoom(userId: string, roomId: string): Promise<void> {
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['owner'],
+    });
+    const reqUser = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (chatRoom.owner.id !== reqUser.id) {
+      throw new HttpException(
+        'You are not the owner of this room',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    await this.chatRoomRepository.delete({ id: roomId });
   }
 }
