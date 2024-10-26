@@ -15,7 +15,7 @@ import { ChatRoomArch } from './chatRoomArch.entity';
 
 @Entity()
 export class MessageArch extends Message {
-  @ManyToOne(() => ChatRoom, (chatRoom) => chatRoom.messages, {
+  @ManyToOne(() => ChatRoomArch, (chatRoom) => chatRoom.messages, {
     nullable: false,
   })
   @JoinColumn({ name: 'chat_room_id' })
