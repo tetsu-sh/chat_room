@@ -12,8 +12,6 @@ import { ChatRoom } from '../chatRoom/chatRoom.entity';
 import { User } from '../user/user.entity';
 import { Message } from '../chatRoom/messages.entity';
 
-// cors
-
 export interface MessageObject {
   nickName: string;
   content: string;
