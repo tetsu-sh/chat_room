@@ -2,7 +2,6 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  OneToOne,
   JoinColumn,
   OneToMany,
   ManyToOne,
@@ -28,4 +27,8 @@ export class ChatRoom extends BaseEntity {
 
   @OneToMany(() => Message, (message) => message.chatRoom)
   messages: Message[];
+
+  canDelete(): boolean {
+    return this.members.length === 0;
+  }
 }
