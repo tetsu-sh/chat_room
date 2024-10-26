@@ -17,23 +17,27 @@ export class ChatRoomUsecase {
   async createRoom(user_id: string): Promise<string> {
     var chatRoom = new ChatRoom();
     chatRoom.id = uuid();
-    chatRoom.name = 'room';
-    var user = await this.userRepository.findOne({ where: { id: user_id } });
-    chatRoom.user = user;
-
+    chatRoom.name = 'room' + chatRoom.id;
+    try {
+      chatRoom.owner = await this.userRepository.findOne({
+        where: { id: user_id },
+      });
+    } catch (e) {
+      console.log(e);
+    }
     await this.chatRoomRepository.save(chatRoom);
     return chatRoom.id;
   }
 
-  async joinRoom(user_id: string, room_id: string): Promise<void> {
-    var chatRoom = await this.chatRoomRepository.findOne({
-      where: { id: room_id },
-    });
-    var user = await this.userRepository.findOne({ where: { id: user_id } });
-    // user.chatRoom = chatRoom;
-    chatRoom.members.push(user);
-    await this.chatRoomRepository.save(chatRoom);
+  async listRooms(): Promise<ChatRoom[]> {
+    return await this.chatRoomRepository.find();
+  }
 
-    // await this.userRepository.save(user);
+  async getRoomMembers(roomId: string): Promise<User[]> {
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['members'],
+    });
+    return chatRoom.members;
   }
 }
