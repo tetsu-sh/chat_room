@@ -72,6 +72,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`User ${userId} is joining room ${roomId}`);
         const messages = await this.messageRepository.find({
           where: { chatRoom: { id: roomId } },
+          order: { createdAt: 'ASC' },
           relations: ['user', 'chatRoom'],
         });
 
