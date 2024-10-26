@@ -6,10 +6,12 @@ import { User } from './infra/user/user.entity';
 import { ChatRoom } from './infra/chatRoom/chatRoom.entity';
 import { ChatRoomController } from './presentation/chatRoom/chatRoomController';
 import { ChatRoomUsecase } from './usecase/chatRoomUsecase';
+import { ChatGateway } from './infra/adoptor/gateway';
+import { Message } from './infra/chatRoom/messages.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ChatRoom, User])],
+  imports: [TypeOrmModule.forFeature([ChatRoom, User, Message])],
   controllers: [ChatRoomController],
-  providers: [ChatRoomUsecase],
+  providers: [ChatRoomUsecase, ChatGateway],
 })
 export class ChatRoomModule {}
