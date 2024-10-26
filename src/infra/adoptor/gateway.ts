@@ -20,6 +20,9 @@ import { emit } from 'process';
 export interface MessageObject {
   nickName: string;
   content: string;
+  id: string;
+  userId: string;
+  roomId: string;
 }
 
 @WebSocketGateway(3001, { cors: { origin: '*' } })
@@ -69,7 +72,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`User ${userId} is joining room ${roomId}`);
         const messages = await this.messageRepository.find({
           where: { chatRoom: { id: roomId } },
-          relations: ['user'],
+          relations: ['user', 'chatRoom'],
         });
 
         socket.emit('roomData', {
@@ -78,6 +81,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             (message): MessageObject => ({
               nickName: message.user.nickName,
               content: message.content,
+              id: message.id,
+              userId: message.user.id,
+              roomId: message.chatRoom.id,
             }),
           ),
         });
@@ -115,8 +121,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const messageToSend: MessageObject = {
       nickName: user.nickName,
       content: content,
+      id: newMessage.id,
+      userId: userId,
+      roomId: roomId,
     };
     this.server.to(roomId).emit('receiveMessage', messageToSend); // ルーム内の全ユーザーにメッセージを送信
+  }
+
+  @SubscribeMessage('editMessage')
+  async handleEditMessage(
+    socket: Socket,
+    {
+      roomId,
+      userId,
+      content,
+      messageId,
+    }: { roomId: string; userId: string; content: string; messageId: string },
+  ) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: ['user', 'chatRoom'],
+    });
+    if (message) {
+      message.content = content; // メッセージの内容を更新
+      await this.messageRepository.save(message); // メッセージを保存
+
+      // 更新されたメッセージを全てのクライアントに送信
+      const messageToSend: MessageObject = {
+        nickName: message.user.nickName,
+        content: content,
+        id: messageId,
+        userId: message.user.id,
+        roomId: message.chatRoom.id,
+      };
+      this.server.to(roomId).emit('messageUpdated', messageToSend);
+    } else {
+      socket.emit('errorMessage', 'Message not found');
+    }
   }
 
   @SubscribeMessage('leaveRoom')

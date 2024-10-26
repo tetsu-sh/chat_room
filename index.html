@@ -73,9 +73,30 @@
         console.log('roomData:', data);
         const messagesDiv = document.getElementById('messages');
         messagesDiv.innerHTML = ''; // 既存のメッセージをクリア
+        const currentUserId = document.getElementById('userId').value;
         data.messages.forEach((message) => {
           const messageElement = document.createElement('div');
           messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
+          messageElement.id = message.id; // メッセージのIDを設定
+          // 編集ボタンを追加
+          if (message.userId === currentUserId) {
+            // 自分のメッセージの場合のみ編集ボタンを表示
+            const editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.onclick = () => {
+              const newContent = prompt('Edit your message:', message.content);
+              if (newContent) {
+                console.log('Edit message:', message.id, newContent);
+                socket.emit('editMessage', {
+                  roomId: document.getElementById('roomId').value,
+                  userId: message.userId,
+                  content: newContent,
+                  messageId: message.id,
+                });
+              }
+            };
+            messageElement.appendChild(editButton);
+          }
           messagesDiv.appendChild(messageElement);
         });
       });
@@ -96,7 +117,66 @@
         const messagesDiv = document.getElementById('messages');
         const messageElement = document.createElement('div');
         messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
+        const currentUserId = document.getElementById('userId').value; // 現在のユーザーIDを取得
+
+        // 編集ボタンを追加
+        if (message.userId === currentUserId) {
+          // 自分のメッセージの場合のみ編集ボタンを表示
+          const editButton = document.createElement('button');
+          editButton.textContent = 'Edit';
+          editButton.onclick = () => {
+            const newContent = prompt('Edit your message:', message.content);
+            if (newContent) {
+              console.log('Edit message:', message.id, newContent);
+              socket.emit('editMessage', {
+                roomId: document.getElementById('roomId').value,
+                userId: message.userId,
+                content: newContent,
+                messageId: message.id,
+              });
+            }
+          };
+          messageElement.appendChild(editButton);
+        }
         messagesDiv.appendChild(messageElement);
+      });
+
+      // メッセージが更新されたとき
+      socket.on('messageUpdated', (updatedMessage) => {
+        console.log('Message updated:', updatedMessage);
+        const messagesDiv = document.getElementById('messages');
+        const messageElements = messagesDiv.getElementsByTagName('div');
+        const currentUserId = document.getElementById('userId').value; // 現在のユーザーIDを取得
+
+        for (let i = 0; i < messageElements.length; i++) {
+          const messageElement = messageElements[i];
+          if (messageElement.id === updatedMessage.id) {
+            messageElement.textContent = `${updatedMessage.nickName}: ${updatedMessage.content} (edited)`; // メッセージを更新
+            // 編集ボタンを追加
+            if (updatedMessage.userId === currentUserId) {
+              // 自分のメッセージの場合のみ編集ボタンを表示
+              const editButton = document.createElement('button');
+              editButton.textContent = 'Edit';
+              editButton.onclick = () => {
+                const newContent = prompt(
+                  'Edit your message:',
+                  updatedMessage.content,
+                );
+                if (newContent) {
+                  console.log('Edit message:', updatedMessage.id, newContent);
+                  socket.emit('editMessage', {
+                    roomId: document.getElementById('roomId').value,
+                    userId: updatedMessage.userId,
+                    content: newContent,
+                    messageId: updatedMessage.id,
+                  });
+                }
+              };
+              messageElement.appendChild(editButton);
+            }
+            break;
+          }
+        }
       });
 
       // メッセージを送信する
