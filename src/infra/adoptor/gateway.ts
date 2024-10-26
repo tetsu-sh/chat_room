@@ -7,13 +7,10 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ChatRoom } from '../chatRoom/chatRoom.entity';
 import { User } from '../user/user.entity';
 import { Message } from '../chatRoom/messages.entity';
-import uuid from 'ui7';
-import { el } from '@faker-js/faker/.';
-import { emit } from 'process';
 
 // cors
 
