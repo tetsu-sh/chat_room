@@ -75,7 +75,7 @@
         messagesDiv.innerHTML = ''; // 既存のメッセージをクリア
         data.messages.forEach((message) => {
           const messageElement = document.createElement('div');
-          messageElement.textContent = message.content; // メッセージの内容を表示
+          messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
           messagesDiv.appendChild(messageElement);
         });
       });
@@ -91,11 +91,11 @@
       });
 
       // メッセージを受信
-      socket.on('receiveMessage', (content) => {
-        console.log('New message:', content);
+      socket.on('receiveMessage', (message) => {
+        console.log('New message:', message);
         const messagesDiv = document.getElementById('messages');
         const messageElement = document.createElement('div');
-        messageElement.textContent = content; // 新しいメッセージを表示
+        messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
         messagesDiv.appendChild(messageElement);
       });
 

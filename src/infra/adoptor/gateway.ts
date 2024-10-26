@@ -17,10 +17,10 @@ import { emit } from 'process';
 
 // cors
 
-type MessageObject = {
+export interface MessageObject {
   nickName: string;
   content: string;
-};
+}
 
 @WebSocketGateway(3001, { cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -67,9 +67,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.userRepository.save(user);
         socket.join(roomId);
         console.log(`User ${userId} is joining room ${roomId}`);
+        const messages = await this.messageRepository.find({
+          where: { chatRoom: { id: roomId } },
+          relations: ['user'],
+        });
+
         socket.emit('roomData', {
           members: chatRoom.members,
-          messages: chatRoom.messages,
+          messages: messages.map(
+            (message): MessageObject => ({
+              nickName: message.user.nickName,
+              content: message.content,
+            }),
+          ),
         });
         this.server.to(roomId).emit('roomUpdate', user.nickName);
       }
@@ -98,10 +108,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const newMessage = this.messageRepository.create({
       content: content,
       chatRoom: { id: roomId },
+      user: { id: userId },
     });
     await this.messageRepository.save(newMessage);
 
-    this.server.to(roomId).emit('receiveMessage', content); // ルーム内の全ユーザーにメッセージを送信
+    const messageToSend: MessageObject = {
+      nickName: user.nickName,
+      content: content,
+    };
+    this.server.to(roomId).emit('receiveMessage', messageToSend); // ルーム内の全ユーザーにメッセージを送信
   }
 
   @SubscribeMessage('leaveRoom')
