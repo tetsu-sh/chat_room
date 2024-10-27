@@ -1,164 +1,208 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
-import { User } from '../src/infra/user/user.entity';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { faker } from '@faker-js/faker';
-import { TypeOrmNamingStrategy } from '../src/config/TypeOrmNamingStrategy';
-import { ChatRoom } from '../src/infra/chatRoom/chatRoom.entity';
-import { CreateChatRoomRequest } from '../src/presentation/chatRoom/request/createChatRoomRequest';
-import { createUser } from './util/createUser';
-import { Message } from '../src/infra/chatRoom/messages.entity';
-import { ChatRoomModule } from '../src/chatRoom.module';
-import { ChatRoomArch } from '../src/infra/chatRoom/chatRoomArch.entity';
-import { MessageArch } from '../src/infra/chatRoom/messagesArch.entity';
-import { DeleteChatRoomRequest } from 'src/presentation/chatRoom/request/deleteChatRoomRequest';
-import { createChatRoom } from './util/createChatRoom';
+import { ChatRoom } from '../chatRoom/chatRoom.entity';
+import { User } from '../user/user.entity';
+import { Message } from '../chatRoom/messages.entity';
 
-describe('ChatRoomController (e2e)', () => {
-  let app: INestApplication;
-  let moduleFixture: TestingModule;
-  let userRepository: Repository<User>;
-  let chatRoomRepository: Repository<ChatRoom>;
-  let chatRoomArchRepository: Repository<ChatRoomArch>;
-  let messageRepository: Repository<Message>;
+export interface MessageObject {
+  nickName: string;
+  content: string;
+  id: string;
+  userId: string;
+  roomId: string;
+}
 
-  beforeEach(async () => {
-    moduleFixture = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          envFilePath: '.env.test.local',
-          isGlobal: true,
-        }),
-        ChatRoomModule,
-        TypeOrmModule.forRoot({
-          type: 'mysql',
-          host: process.env.DATABASE_HOST,
-          port: Number(process.env.DATABASE_PORT),
-          username: process.env.DATABASE_USER,
-          password: process.env.DATABASE_PASSWORD,
-          database: process.env.DATABASE_NAME,
-          entities: [User, ChatRoom, Message, ChatRoomArch, MessageArch],
-          synchronize: true,
-          namingStrategy: new TypeOrmNamingStrategy(),
-        }),
-      ],
-    }).compile();
+@WebSocketGateway(Number(process.env.WEB_SOCKET_PORT), {
+  cors: { origin: '*' },
+})
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer() server: Server;
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-    userRepository = moduleFixture.get<Repository<User>>(
-      getRepositoryToken(User),
-    );
-    chatRoomRepository = moduleFixture.get<Repository<ChatRoom>>(
-      getRepositoryToken(ChatRoom),
-    );
-    messageRepository = moduleFixture.get<Repository<Message>>(
-      getRepositoryToken(Message),
-    );
-    chatRoomArchRepository = moduleFixture.get<Repository<ChatRoomArch>>(
-      getRepositoryToken(ChatRoomArch),
-    );
-    await app.init();
-  });
-  afterEach(async () => {
-    await messageRepository.delete({});
-    await chatRoomArchRepository.delete({});
-    await userRepository.update({}, { joinedRoom: null });
-    await chatRoomRepository.delete({});
-    await userRepository.delete({});
-  });
-  afterAll(async () => {
-    await app.close();
-  });
+  constructor(
+    @InjectRepository(ChatRoom)
+    private chatRoomRepository: Repository<ChatRoom>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Message)
+    private messageRepository: Repository<Message>,
+  ) {}
 
-  it('/chatRoom (POST)', async () => {
-    const user = await createUser(userRepository);
-    const req = new CreateChatRoomRequest();
-    req.name = faker.lorem.word() + faker.lorem.word();
-    req.userId = user.id;
-    const res = await request(app.getHttpServer())
-      .post('/chatRoom')
-      .send(req)
-      .expect(HttpStatus.CREATED);
-    chatRoomRepository.findOne({ where: { id: res.body.id } }).then((room) => {
-      expect(room).toBeDefined();
-      expect(room.name).toBe(req.name);
+  handleConnection(socket: Socket) {
+    console.log('A user connected:', socket.id);
+  }
+
+  handleDisconnect(socket: Socket) {
+    console.log('User disconnected:', socket.id);
+  }
+
+  @SubscribeMessage('joinRoom')
+  async handleJoinRoom(
+    socket: Socket,
+    { roomId, userId }: { roomId: string; userId: string },
+  ) {
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['members'],
     });
-  });
 
-  it('/chatRoom (GET)', async () => {
-    await request(app.getHttpServer()).get('/chatRoom').expect(HttpStatus.OK);
-  });
-
-  it('/chatRoom/:id/members (GET)', async () => {
-    const owner = await createUser(userRepository);
-    const room = await createChatRoom(chatRoomRepository, owner);
-    const user = await createUser(userRepository);
-    await chatRoomRepository.save(room);
-    await userRepository.save(user);
-    const res = await request(app.getHttpServer())
-      .get('/chatRoom/' + room.id + '/members')
-      .expect(HttpStatus.OK);
-    res.body.forEach((member) => {
-      expect(member.id).toBe(user.id);
-    });
-    user.joinedRoom = null;
-    await userRepository.save(user);
-  });
-
-  it('/chatRoom (DELETE)', async () => {
-    const owner = await createUser(userRepository);
-    const room = await createChatRoom(chatRoomRepository, owner);
-    const req = new DeleteChatRoomRequest();
-    req.roomId = room.id;
-    req.userId = owner.id;
-    await request(app.getHttpServer())
-      .delete('/chatRoom')
-      .send(req)
-      .expect(HttpStatus.OK);
-    chatRoomRepository.findOne({ where: { id: room.id } }).then((room) => {
-      expect(room).toBeNull();
-    });
-  });
-
-  it('/chatRoom (DELETE) cannot delete room by not owner', async () => {
-    const owner = await createUser(userRepository);
-    const roomOrigin = await createChatRoom(chatRoomRepository, owner);
-    const notOwner = await createUser(userRepository);
-    const req = new DeleteChatRoomRequest();
-    req.roomId = roomOrigin.id;
-    req.userId = notOwner.id;
-    await request(app.getHttpServer())
-      .delete('/chatRoom')
-      .send(req)
-      .expect(HttpStatus.FORBIDDEN);
-    chatRoomRepository
-      .findOne({ where: { id: roomOrigin.id } })
-      .then((room) => {
-        expect(room).toBeDefined();
+    if (chatRoom) {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['joinedRoom'],
       });
-  });
+      if (user) {
+        console.log(user);
+        if (user.joinedRoom !== null) {
+          socket.emit('errorMessage', 'You are already in a room');
+        }
+        user.joinedRoom = chatRoom;
+        await this.userRepository.save(user);
+        socket.join(roomId);
+        console.log(`User ${userId} is joining room ${roomId}`);
+        const messages = await this.messageRepository.find({
+          where: { chatRoom: { id: roomId } },
+          order: { createdAt: 'ASC' },
+          relations: ['user', 'chatRoom'],
+        });
 
-  it('/chatRoom (DELETE) cannot delete room which member join', async () => {
-    const owner = await createUser(userRepository);
-    const roomOrigin = await createChatRoom(chatRoomRepository, owner);
-    const user = await createUser(userRepository);
-    user.joinedRoom = roomOrigin;
-    await userRepository.save(user);
-    const req = new DeleteChatRoomRequest();
-    req.roomId = roomOrigin.id;
-    req.userId = owner.id;
-    await request(app.getHttpServer())
-      .delete('/chatRoom')
-      .send(req)
-      .expect(HttpStatus.UNPROCESSABLE_ENTITY);
-    chatRoomRepository
-      .findOne({ where: { id: roomOrigin.id } })
-      .then((room) => {
-        expect(room).toBeDefined();
+        socket.emit('roomData', {
+          members: chatRoom.members,
+          messages: messages.map(
+            (message): MessageObject => ({
+              nickName: message.user.nickName,
+              content: message.content,
+              id: message.id,
+              userId: message.user.id,
+              roomId: message.chatRoom.id,
+            }),
+          ),
+        });
+        this.server.to(roomId).emit('roomUpdate', user.nickName);
+      }
+    } else {
+      socket.emit('errorMessage', 'Room not found');
+    }
+  }
+
+  @SubscribeMessage('putMessage')
+  async handlePutMessage(
+    socket: Socket,
+    {
+      roomId,
+      userId,
+      content,
+    }: { roomId: string; userId: string; content: string },
+  ) {
+    console.log('putMessage', content);
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+    });
+    if (!user || !chatRoom) {
+      socket.emit('errorMessage', 'User or room not found');
+    }
+    const newMessage = this.messageRepository.create({
+      content: content,
+      chatRoom: { id: roomId },
+      user: { id: userId },
+    });
+    await this.messageRepository.save(newMessage);
+
+    // send message to only members in the room
+    const messageToSend: MessageObject = {
+      nickName: user.nickName,
+      content: content,
+      id: newMessage.id,
+      userId: userId,
+      roomId: roomId,
+    };
+      id: newMessage.id,
+      userId: userId,
+      roomId: roomId,
+    };
+    this.server.to(roomId).emit('receiveMessage', messageToSend);
+  }
+
+  @SubscribeMessage('editMessage')
+  async handleEditMessage(
+    socket: Socket,
+    {
+      roomId,
+      userId,
+      content,
+      messageId,
+    }: { roomId: string; userId: string; content: string; messageId: string },
+  ) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: ['user', 'chatRoom'],
+    });
+    if (message) {
+      if (message.user.id === userId) {
+    this.server.to(roomId).emit('receiveMessage', messageToSend);
+  }
+
+  @SubscribeMessage('editMessage')
+  async handleEditMessage(
+    socket: Socket,
+    {
+      roomId,
+      userId,
+      content,
+      messageId,
+    }: { roomId: string; userId: string; content: string; messageId: string },
+  ) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: ['user', 'chatRoom'],
+    });
+    if (message) {
+      message.content = content;
+      await this.messageRepository.save(message);
+
+      // send updated message to only members in the room
+      const messageToSend: MessageObject = {
+        nickName: message.user.nickName,
+        content: content,
+        id: messageId,
+        userId: message.user.id,
+        roomId: message.chatRoom.id,
+      };
+      this.server.to(roomId).emit('messageUpdated', messageToSend);
+    } else {
+      socket.emit('errorMessage', 'Message not found');
+    }
+  }
+
+  @SubscribeMessage('leaveRoom')
+  async handleLeaveRoom(
+    socket: Socket,
+    { roomId, userId }: { roomId: string; userId: string },
+  ) {
+    socket.leave(roomId.toString());
+    const chatRoom = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+    });
+
+    if (chatRoom) {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
       });
-  });
-});
+      if (!user) {
+        socket.emit('errorMessage', 'User not found');
+      }
+      user.joinedRoom = null;
+      await this.userRepository.save(user);
+      this.server.to(roomId).emit('roomUpdate', user.nickName);
+      console.log(`User ${userId} left room ${chatRoom.name}`);
+    }
+  }
+}
