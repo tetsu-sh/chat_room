@@ -80,7 +80,7 @@ export class ChatRoomUsecase {
     if (!chatRoom.canDelete()) {
       throw new HttpException(
         'You cannot delete this room because there are members in this room',
-        HttpStatus.FORBIDDEN,
+        HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
     await this.archiveChatRoom(chatRoom);

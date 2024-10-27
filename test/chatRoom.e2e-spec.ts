@@ -66,6 +66,7 @@ describe('ChatRoomController (e2e)', () => {
   afterEach(async () => {
     await messageRepository.delete({});
     await chatRoomArchRepository.delete({});
+    await userRepository.update({}, { joinedRoom: null });
     await chatRoomRepository.delete({});
     await userRepository.delete({});
   });
@@ -74,7 +75,7 @@ describe('ChatRoomController (e2e)', () => {
   });
 
   it('/chatRoom (POST)', async () => {
-    var user = await createUser(userRepository);
+    const user = await createUser(userRepository);
     const req = new CreateChatRoomRequest();
     req.name = faker.lorem.word() + faker.lorem.word();
     req.userId = user.id;
@@ -95,9 +96,9 @@ describe('ChatRoomController (e2e)', () => {
   });
 
   it('/chatRoom/:id/members (GET)', async () => {
-    var owner = await createUser(userRepository);
-    var room = await createChatRoom(chatRoomRepository, owner);
-    var user = await createUser(userRepository);
+    const owner = await createUser(userRepository);
+    const room = await createChatRoom(chatRoomRepository, owner);
+    const user = await createUser(userRepository);
     await chatRoomRepository.save(room);
     await userRepository.save(user);
     const res = await request(app.getHttpServer())
@@ -111,9 +112,9 @@ describe('ChatRoomController (e2e)', () => {
   });
 
   it('/chatRoom (DELETE)', async () => {
-    var owner = await createUser(userRepository);
-    var room = await createChatRoom(chatRoomRepository, owner);
-    var req = new DeleteChatRoomRequest();
+    const owner = await createUser(userRepository);
+    const room = await createChatRoom(chatRoomRepository, owner);
+    const req = new DeleteChatRoomRequest();
     req.roomId = room.id;
     req.userId = owner.id;
     const res = await request(app.getHttpServer())
@@ -123,5 +124,43 @@ describe('ChatRoomController (e2e)', () => {
     chatRoomRepository.findOne({ where: { id: room.id } }).then((room) => {
       expect(room).toBeNull();
     });
+  });
+
+  it('/chatRoom (DELETE) cannot delete room by not owner', async () => {
+    const owner = await createUser(userRepository);
+    const roomOrigin = await createChatRoom(chatRoomRepository, owner);
+    const notOwner = await createUser(userRepository);
+    const req = new DeleteChatRoomRequest();
+    req.roomId = roomOrigin.id;
+    req.userId = notOwner.id;
+    const res = await request(app.getHttpServer())
+      .delete('/chatRoom')
+      .send(req)
+      .expect(HttpStatus.FORBIDDEN);
+    chatRoomRepository
+      .findOne({ where: { id: roomOrigin.id } })
+      .then((room) => {
+        expect(room).toBeDefined();
+      });
+  });
+
+  it('/chatRoom (DELETE) cannot delete room which member join', async () => {
+    const owner = await createUser(userRepository);
+    const roomOrigin = await createChatRoom(chatRoomRepository, owner);
+    const user = await createUser(userRepository);
+    user.joinedRoom = roomOrigin;
+    await userRepository.save(user);
+    const req = new DeleteChatRoomRequest();
+    req.roomId = roomOrigin.id;
+    req.userId = owner.id;
+    const res = await request(app.getHttpServer())
+      .delete('/chatRoom')
+      .send(req)
+      .expect(HttpStatus.UNPROCESSABLE_ENTITY);
+    chatRoomRepository
+      .findOne({ where: { id: roomOrigin.id } })
+      .then((room) => {
+        expect(room).toBeDefined();
+      });
   });
 });
