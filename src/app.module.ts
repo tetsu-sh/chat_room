@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users.module';
 import { TypeOrmNamingStrategy } from './config/TypeOrmNamingStrategy';
 import { ChatRoomModule } from './chatRoom.module';
+import { ChatGatewayModule } from './chatGateway.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ChatRoomModule } from './chatRoom.module';
     }),
     UsersModule,
     ChatRoomModule,
+    ChatGatewayModule,
   ],
 })
 export class AppModule {}
