@@ -22,7 +22,7 @@ describe('UserController (e2e)', () => {
       imports: [
         UsersModule,
         ConfigModule.forRoot({
-          envFilePath: '.env.test',
+          envFilePath: '.env.test.local',
           isGlobal: true,
         }),
         TypeOrmModule.forRoot({

@@ -31,7 +31,7 @@ describe('ChatRoomController (e2e)', () => {
       imports: [
         ChatRoomModule,
         ConfigModule.forRoot({
-          envFilePath: '.env.test',
+          envFilePath: '.env.test.local',
           isGlobal: true,
         }),
         TypeOrmModule.forRoot({

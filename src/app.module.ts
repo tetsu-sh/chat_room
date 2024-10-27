@@ -8,7 +8,7 @@ import { ChatRoomModule } from './chatRoom.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env.dev',
+      envFilePath: '.env.development.local',
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
