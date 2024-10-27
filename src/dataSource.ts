@@ -2,7 +2,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { TypeOrmNamingStrategy } from './config/TypeOrmNamingStrategy';
 
-dotenv.config({ path: '.env.development.host' });
+dotenv.config({ path: '.env.development.local.host' });
 
 const config = {
   type: 'mysql',
