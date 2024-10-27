@@ -12,7 +12,6 @@ import { CreateChatRoomRequest } from '../src/presentation/chatRoom/request/crea
 import { createUser } from './util/createUser';
 import { Message } from '../src/infra/chatRoom/messages.entity';
 import { ChatRoomModule } from '../src/chatRoom.module';
-import { AppModule } from '../src/app.module';
 import { ChatRoomArch } from '../src/infra/chatRoom/chatRoomArch.entity';
 import { MessageArch } from '../src/infra/chatRoom/messagesArch.entity';
 import { DeleteChatRoomRequest } from 'src/presentation/chatRoom/request/deleteChatRoomRequest';
@@ -29,11 +28,11 @@ describe('ChatRoomController (e2e)', () => {
   beforeEach(async () => {
     moduleFixture = await Test.createTestingModule({
       imports: [
-        ChatRoomModule,
         ConfigModule.forRoot({
           envFilePath: '.env.test.local',
           isGlobal: true,
         }),
+        ChatRoomModule,
         TypeOrmModule.forRoot({
           type: 'mysql',
           host: process.env.DATABASE_HOST,
