@@ -26,13 +26,13 @@ export class ChatRoomUsecase {
   ) {}
 
   async createRoom(user_id: string, name: string): Promise<string> {
-    var chatRoom = new ChatRoom();
+    const chatRoom = new ChatRoom();
     chatRoom.id = uuid();
     chatRoom.name = name;
-    var owner = await this.userRepository.findOne({
+    const owner = await this.userRepository.findOne({
       where: { id: user_id },
     });
-    var existChatRoom = await this.chatRoomRepository.findOne({
+    const existChatRoom = await this.chatRoomRepository.findOne({
       where: { name: name },
     });
     if (existChatRoom) {

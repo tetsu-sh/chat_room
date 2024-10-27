@@ -1,6 +1,3 @@
-// var snakeCase = require('typeorm/util/StringUtils').snakeCase;
-// var pluralize = require('pluralize');
-
 import { snakeCase } from 'typeorm/util/StringUtils';
 import * as pluralize from 'pluralize';
 

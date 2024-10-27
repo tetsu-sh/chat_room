@@ -50,7 +50,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const chatRoom = await this.chatRoomRepository.findOne({
       where: { id: roomId },
-      relations: ['members', 'messages'],
+      relations: ['members'],
     });
 
     if (chatRoom) {
@@ -102,8 +102,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }: { roomId: string; userId: string; content: string },
   ) {
     console.log('putMessage', content);
-    var user = await this.userRepository.findOne({ where: { id: userId } });
-    var chatRoom = await this.chatRoomRepository.findOne({
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const chatRoom = await this.chatRoomRepository.findOne({
       where: { id: roomId },
     });
     if (!user || !chatRoom) {
@@ -116,6 +116,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
     await this.messageRepository.save(newMessage);
 
+    // send message to only members in the room
     const messageToSend: MessageObject = {
       nickName: user.nickName,
       content: content,
@@ -123,7 +124,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId: userId,
       roomId: roomId,
     };
-    this.server.to(roomId).emit('receiveMessage', messageToSend); // ルーム内の全ユーザーにメッセージを送信
+    this.server.to(roomId).emit('receiveMessage', messageToSend);
   }
 
   @SubscribeMessage('editMessage')
@@ -141,10 +142,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       relations: ['user', 'chatRoom'],
     });
     if (message) {
-      message.content = content; // メッセージの内容を更新
-      await this.messageRepository.save(message); // メッセージを保存
+      message.content = content;
+      await this.messageRepository.save(message);
 
-      // 更新されたメッセージを全てのクライアントに送信
+      // send updated message to only members in the room
       const messageToSend: MessageObject = {
         nickName: message.user.nickName,
         content: content,
