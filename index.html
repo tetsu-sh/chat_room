@@ -4,14 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebSocket Chat Client</title>
-    <!-- <script src="/socket.io/socket.io.js"></script> -->
     <script
       src="https://cdn.socket.io/4.8.0/socket.io.min.js"
       integrity="sha384-OoIbkvzsFFQAG88r+IqMAjyOtYDPGO0cqK5HF5Uosdy/zUEGySeAzytENMDynREd"
       crossorigin="anonymous"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <!-- Socket.IOのクライアントライブラリ -->
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -27,7 +25,7 @@
   <body>
     <h1>Chat Room</h1>
 
-    <!-- ログインフォーム -->
+    <!-- login form -->
     <div id="loginForm">
       <label for="nickName">Nick Name:</label>
       <input type="text" id="nickName" placeholder="Enter your nickname" />
@@ -36,82 +34,77 @@
     <!-- room join -->
     <div id="roomSelection">
       <label for="roomId">Room ID:</label>
-      <!-- <input type="text" id="roomId" placeholder="Enter room ID" /> -->
       <select name="room" id="roomId"></select>
       <button id="joinButton">Join Room</button>
     </div>
 
+    <!-- message body -->
     <div id="messages"></div>
 
+    <!-- message form -->
     <div>
       <input type="text" id="messageInput" placeholder="Type your message" />
       <button id="sendButton">Send Message</button>
     </div>
+
+    <!-- about members -->
     <div id="members">
       <h2>Members</h2>
       <ul id="memberList"></ul>
-      <!-- メンバー一覧を表示するリスト -->
     </div>
 
+    <!-- me -->
     <div id="currentUser" style="display: none"></div>
-    <!-- ニックネームを表示するための要素 -->
-    <!-- 隠しフィールドでユーザーIDを保持 -->
     <input type="hidden" id="userId" />
 
     <script>
-      const socket = io('ws://localhost:3001'); // サーバーのURLを指定
+      const socket = io('ws://localhost:3001');
       const url = 'http://localhost:3333';
-      //   const axios = axios;
-      //   const axios = require('axios/dist/browser/axios.cjs');
 
-      // エラーハンドリング
+      //   error handling with socket
       socket.on('error', (error) => {
         console.error('Error from server:', error.message);
-        alert(error.message); // エラーメッセージをアラートで表示
+        alert(error.message);
       });
 
-      // ログインボタンのクリックイベント
+      // event triggered when the user logs in
       document
         .getElementById('loginButton')
         .addEventListener('click', async () => {
           const nickName = document.getElementById('nickName').value;
-          const req = { nickName }; // ログインリクエスト
+          const req = { nickName };
           const res = await axios.post(`${url}/user/login`, req);
-          const userId = res.data.id; // サーバーから返されたユーザーIDを取得
+          const userId = res.data.id;
 
-          // ユーザーIDを設定し、ルーム選択を表示
           document.getElementById('userId').value = userId;
           document.getElementById('roomSelection').style.display = 'block';
           document.getElementById('loginForm').style.display = 'none';
 
-          // ニックネームを表示
           const currentUserDiv = document.getElementById('currentUser');
 
           currentUserDiv.textContent = `Logged in as: ${nickName}`;
           currentUserDiv.style.display = 'block';
         });
 
-      // ルームに参加する
+      // join room
       document.getElementById('joinButton').addEventListener('click', () => {
         const roomId = document.getElementById('roomId').value;
-        // const userId = document.getElementById('userId').value;
         userId = document.getElementById('userId').value;
         socket.emit('joinRoom', { roomId, userId });
       });
 
-      // ルームデータを受信
+      // receive room data
       socket.on('roomData', (data) => {
         console.log('roomData:', data);
         const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = ''; // 既存のメッセージをクリア
+        messagesDiv.innerHTML = '';
         const currentUserId = document.getElementById('userId').value;
         data.messages.forEach((message) => {
           const messageElement = document.createElement('div');
-          messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
-          messageElement.id = message.id; // メッセージのIDを設定
-          // 編集ボタンを追加
+          messageElement.textContent = `${message.nickName}: ${message.content}`;
+          messageElement.id = message.id;
+
           if (message.userId === currentUserId) {
-            // 自分のメッセージの場合のみ編集ボタンを表示
             const editButton = creteEditButton(message);
             messageElement.appendChild(editButton);
           }
@@ -119,7 +112,7 @@
         });
       });
 
-      // ルームの更新を受信
+      // refetch room members when a member join or leave
       socket.on('roomUpdate', (nickName) => {
         console.log('roomUpdate:', nickName);
         const messagesDiv = document.getElementById('messages');
@@ -129,18 +122,16 @@
         fetchRoomMembers(document.getElementById('roomId').value);
       });
 
-      // メッセージを受信
+      // receive new message
       socket.on('receiveMessage', (message) => {
         console.log('New message:', message);
         const messagesDiv = document.getElementById('messages');
         const messageElement = document.createElement('div');
-        messageElement.textContent = `${message.nickName}: ${message.content}`; // メッセージの内容を表示
-        messageElement.id = message.id; // メッセージのIDを設定
-        const currentUserId = document.getElementById('userId').value; // 現在のユーザーIDを取得
+        messageElement.textContent = `${message.nickName}: ${message.content}`;
+        messageElement.id = message.id;
+        const currentUserId = document.getElementById('userId').value;
 
-        // 編集ボタンを追加
         if (message.userId === currentUserId) {
-          // 自分のメッセージの場合のみ編集ボタンを表示
           const editButton = creteEditButton(message);
           messageElement.appendChild(editButton);
         }
@@ -165,20 +156,18 @@
         return editButton;
       }
 
-      // メッセージが更新されたとき
+      // when message is updated, update the message on the screen
       socket.on('messageUpdated', (updatedMessage) => {
         console.log('Message updated:', updatedMessage);
         const messagesDiv = document.getElementById('messages');
         const messageElements = messagesDiv.getElementsByTagName('div');
-        const currentUserId = document.getElementById('userId').value; // 現在のユーザーIDを取得
+        const currentUserId = document.getElementById('userId').value;
 
         for (let i = 0; i < messageElements.length; i++) {
           const messageElement = messageElements[i];
           if (messageElement.id === updatedMessage.id) {
             messageElement.textContent = `${updatedMessage.nickName}: ${updatedMessage.content} (edited)`; // メッセージを更新
-            // 編集ボタンを追加
             if (updatedMessage.userId === currentUserId) {
-              // 自分のメッセージの場合のみ編集ボタンを表示
               const editButton = creteEditButton(updatedMessage);
               messageElement.appendChild(editButton);
             }
@@ -187,53 +176,52 @@
         }
       });
 
-      // メッセージを送信する
+      // send message
       document.getElementById('sendButton').addEventListener('click', () => {
         const roomId = document.getElementById('roomId').value;
         const userId = document.getElementById('userId').value;
         const content = document.getElementById('messageInput').value;
         socket.emit('putMessage', { roomId, userId, content });
-        document.getElementById('messageInput').value = ''; // 入力フィールドをクリア
+        document.getElementById('messageInput').value = '';
       });
 
-      // ルームから退出する
+      // leave room
       function leaveRoom() {
         const roomId = document.getElementById('roomId').value;
         const userId = document.getElementById('userId').value;
         socket.emit('leaveRoom', { roomId, userId });
       }
 
-      // ページが閉じられる前にleaveRoomを呼び出す
+      // call leaveRoom when the user closes the window
       window.addEventListener('beforeunload', leaveRoom);
-      // ページ再読み時にleaveRoomを呼び出す
       window.addEventListener('unload', leaveRoom);
 
-      //   room一覧を取得
+      //  fetch rooms
       async function fetchChatRooms() {
         const res = await axios.get(`${url}/chatRoom`);
         const chatRooms = res.data;
         console.log(chatRooms);
-        // selectタグにオプションを追加
         const roomSelect = document.getElementById('roomId');
-        roomSelect.innerHTML = ''; // 既存のオプションをクリア
+        roomSelect.innerHTML = '';
         chatRooms.forEach((room) => {
           const option = document.createElement('option');
-          option.value = room.id; // ルームのIDをvalueに設定
-          option.textContent = room.name; // ルームの名前を表示
-          roomSelect.appendChild(option); // selectタグにオプションを追加
+          option.value = room.id;
+          option.textContent = room.name;
+          roomSelect.appendChild(option);
         });
       }
-      // ルームのメンバーを取得
+
+      // fetch members who are in the room
       async function fetchRoomMembers(roomId) {
         try {
           const res = await axios.get(`${url}/chatRoom/${roomId}/members`);
           const members = res.data;
           const memberList = document.getElementById('memberList');
-          memberList.innerHTML = ''; // 既存のメンバーをクリア
+          memberList.innerHTML = '';
           members.forEach((member) => {
             const listItem = document.createElement('li');
-            listItem.textContent = member.nickName; // メンバーのニックネームを表示
-            memberList.appendChild(listItem); // メンバーリストに追加
+            listItem.textContent = member.nickName;
+            memberList.appendChild(listItem);
           });
         } catch (error) {
           console.error('Error fetching room members:', error.message);
