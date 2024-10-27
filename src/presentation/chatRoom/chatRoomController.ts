@@ -14,7 +14,7 @@ export class ChatRoomController {
   async createRoom(
     @Body() body: CreateChatRoomRequest,
   ): Promise<CreateChatRoomResponse> {
-    var id = await this.chatRoomUsecase.createRoom(body.userId, body.name);
+    let id = await this.chatRoomUsecase.createRoom(body.userId, body.name);
     return new CreateChatRoomResponse((id = id));
   }
 

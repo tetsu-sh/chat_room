@@ -9,7 +9,7 @@ export class UserController {
 
   @Post('login')
   async login(@Body() body: LoginRequest): Promise<LoginResponse> {
-    var id = await this.userUsecase.login(body.nickName);
+    let id = await this.userUsecase.login(body.nickName);
     return new LoginResponse((id = id));
   }
 }

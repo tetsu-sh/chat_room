@@ -90,9 +90,7 @@ describe('ChatRoomController (e2e)', () => {
   });
 
   it('/chatRoom (GET)', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/chatRoom')
-      .expect(HttpStatus.OK);
+    await request(app.getHttpServer()).get('/chatRoom').expect(HttpStatus.OK);
   });
 
   it('/chatRoom/:id/members (GET)', async () => {
@@ -117,7 +115,7 @@ describe('ChatRoomController (e2e)', () => {
     const req = new DeleteChatRoomRequest();
     req.roomId = room.id;
     req.userId = owner.id;
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .delete('/chatRoom')
       .send(req)
       .expect(HttpStatus.OK);
@@ -133,7 +131,7 @@ describe('ChatRoomController (e2e)', () => {
     const req = new DeleteChatRoomRequest();
     req.roomId = roomOrigin.id;
     req.userId = notOwner.id;
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .delete('/chatRoom')
       .send(req)
       .expect(HttpStatus.FORBIDDEN);
@@ -153,7 +151,7 @@ describe('ChatRoomController (e2e)', () => {
     const req = new DeleteChatRoomRequest();
     req.roomId = roomOrigin.id;
     req.userId = owner.id;
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .delete('/chatRoom')
       .send(req)
       .expect(HttpStatus.UNPROCESSABLE_ENTITY);
