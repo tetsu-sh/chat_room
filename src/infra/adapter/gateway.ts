@@ -20,7 +20,9 @@ export interface MessageObject {
   roomId: string;
 }
 
-@WebSocketGateway(3001, { cors: { origin: '*' } })
+@WebSocketGateway(Number(process.env.WEB_SOCKET_PORT), {
+  cors: { origin: '*' },
+})
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
