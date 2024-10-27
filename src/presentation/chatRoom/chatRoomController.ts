@@ -4,6 +4,7 @@ import { CreateChatRoomRequest } from './request/createChatRoomRequest';
 import { CreateChatRoomResponse } from './response/createChatRoomResponse';
 import { chatRoomResponse } from './response/roomResponse';
 import { DeleteChatRoomRequest } from './request/deleteChatRoomRequest';
+import { User } from 'src/infra/user/user.entity';
 
 @Controller('chatRoom')
 export class ChatRoomController {
@@ -23,7 +24,7 @@ export class ChatRoomController {
   }
 
   @Get(':id/members') // ルームIDに基づいてメンバーを取得
-  async getRoomMembers(@Param('id') roomId: string) {
+  async getRoomMembers(@Param('id') roomId: string): Promise<User[]> {
     return await this.chatRoomUsecase.getRoomMembers(roomId);
   }
 
