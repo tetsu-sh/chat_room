@@ -20,5 +20,11 @@ jobs:
       - name: up
         run: docker compose up -d
 
+      - name: setup
+        uses: pnpm/action-setup@v2.2.2
+
+      - name: install
+        run: pnpm install
+
       - name: test
         run: make testing
