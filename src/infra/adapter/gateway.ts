@@ -20,7 +20,7 @@ export interface MessageObject {
   roomId: string;
 }
 
-@WebSocketGateway(Number(process.env.WEB_SOCKET_PORT), {
+@WebSocketGateway(Number(process.env.WEB_SOCKET_PORT) | 3001, {
   cors: { origin: '*' },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -86,6 +86,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           ),
         });
         this.server.to(roomId).emit('roomUpdate', user.nickName);
+        socket.emit('joinRoomSuccess', { message: 'Joined room successfully' });
       }
     } else {
       socket.emit('errorMessage', 'Room not found');
