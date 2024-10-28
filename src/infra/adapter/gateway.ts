@@ -79,7 +79,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             }),
           ),
         });
-        this.server.to(roomId).emit('roomUpdate', user.nickName);
+        const res: RoomUpdateResponse = {
+          nickName: user.nickName,
+          type: UpdateType.JOINED,
+        };
+        this.server.to(roomId).emit('roomUpdate', res);
         socket.emit('joinRoomSuccess', { message: 'Joined room successfully' });
       }
     } else {
@@ -178,7 +182,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
       user.joinedRoom = null;
       await this.userRepository.save(user);
-      this.server.to(roomId).emit('roomUpdate', user.nickName);
+      const res: RoomUpdateResponse = {
+        nickName: user.nickName,
+        type: UpdateType.LEFT,
+      };
+      this.server.to(roomId).emit('roomUpdate', res);
       console.log(`User ${userId} left room ${chatRoom.name}`);
     }
   }

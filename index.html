@@ -113,11 +113,11 @@
       });
 
       // refetch room members when a member join or leave
-      socket.on('roomUpdate', (nickName) => {
-        console.log('roomUpdate:', nickName);
+      socket.on('roomUpdate', (update) => {
+        console.log('roomUpdate:', update.nickName);
         const messagesDiv = document.getElementById('messages');
         const updateElement = document.createElement('div');
-        updateElement.textContent = `${nickName} has joined the room.`;
+        updateElement.textContent = `${update.nickName} has ${update.type} the room.`;
         messagesDiv.appendChild(updateElement);
         fetchRoomMembers(document.getElementById('roomId').value);
       });
