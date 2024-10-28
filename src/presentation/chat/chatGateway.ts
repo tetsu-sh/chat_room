@@ -18,6 +18,7 @@ import { PutMessageRequest } from './request/putMessageRequest';
 import { EditMessageRequest } from './request/editMessageRequest';
 import { ReaveRoomRequest } from './request/reaveRoomRequest';
 import { RoomUpdateResponse, UpdateType } from './response/roomUpdateResponse';
+import { ChatUsecase } from 'src/usecase/chatUsecase';
 
 @WebSocketGateway(Number(process.env.WEB_SOCKET_PORT) | 3001, {
   cors: { origin: '*' },
@@ -32,6 +33,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private userRepository: Repository<User>,
     @InjectRepository(Message)
     private messageRepository: Repository<Message>,
+    private usecase: ChatUsecase,
   ) {}
 
   handleConnection(socket: Socket) {
@@ -45,53 +47,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(socket: Socket, req: JoinRoomRequest) {
     const { roomId, userId } = req;
-    const chatRoom = await this.chatRoomRepository.findOne({
-      where: { id: roomId },
-      relations: ['members'],
-    });
-
-    if (chatRoom) {
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-        relations: ['joinedRoom'],
-      });
-      if (user) {
-        console.log(user);
-        if (user.joinedRoom !== null) {
-          socket.emit('errorMessage', 'You are already in a room');
-          return;
-        }
-        user.joinedRoom = chatRoom;
-        await this.userRepository.save(user);
-        socket.join(roomId);
-        console.log(`User ${userId} is joining room ${roomId}`);
-        const messages = await this.messageRepository.find({
-          where: { chatRoom: { id: roomId } },
-          order: { createdAt: 'ASC' },
-          relations: ['user', 'chatRoom'],
-        });
-
-        socket.emit('roomData', {
-          members: chatRoom.members,
-          messages: messages.map(
-            (message): MessageResponse => ({
-              id: message.id,
-              nickName: message.user.nickName,
-              content: message.content,
-              userId: message.user.id,
-              roomId: message.chatRoom.id,
-            }),
-          ),
-        });
-        const res: RoomUpdateResponse = {
-          nickName: user.nickName,
-          type: UpdateType.JOINED,
-        };
-        this.server.to(roomId).emit('roomUpdate', res);
-        socket.emit('joinRoomSuccess', { message: 'Joined room successfully' });
-      }
-    } else {
-      socket.emit('errorMessage', 'Room not found');
+    try {
+      const { roomData, roomUpdate } = await this.usecase.joinRoom(
+        userId,
+        roomId,
+      );
+      socket.join(roomId);
+      socket.emit('roomData', roomData);
+      this.server.to(roomId).emit('roomUpdate', roomUpdate);
+      socket.emit('joinRoomSuccess', { message: 'Joined room successfully' });
+    } catch (e) {
+      console.log(e);
+      socket.emit('errorMessage', e.message);
     }
   }
 
