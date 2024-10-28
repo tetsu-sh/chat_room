@@ -39,7 +39,7 @@ export default [
 
       parserOptions: {
         project: 'tsconfig.json',
-        tsconfigRootDir: '/Users/shinmyotetsuforc/workspace/own/chat_room',
+        tsconfigRootDir: __dirname,
       },
     },
 
