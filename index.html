@@ -194,7 +194,9 @@
       function leaveRoom() {
         const roomId = document.getElementById('roomId').value;
         const userId = document.getElementById('userId').value;
-        socket.emit('leaveRoom', { roomId, userId });
+        if (roomId && userId) {
+          socket.emit('leaveRoom', { roomId, userId });
+        }
       }
 
       // call leaveRoom when the user closes the window
