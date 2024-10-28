@@ -59,6 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(user);
         if (user.joinedRoom !== null) {
           socket.emit('errorMessage', 'You are already in a room');
+          return;
         }
         user.joinedRoom = chatRoom;
         await this.userRepository.save(user);
@@ -104,6 +105,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
     if (!user || !chatRoom) {
       socket.emit('errorMessage', 'User or room not found');
+      return;
     }
     const newMessage = this.messageRepository.create({
       id: uuid(),
@@ -167,6 +169,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
       if (!user) {
         socket.emit('errorMessage', 'User not found');
+        return;
       }
       user.joinedRoom = null;
       await this.userRepository.save(user);
