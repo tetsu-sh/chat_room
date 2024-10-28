@@ -13,6 +13,11 @@ import { User } from 'src/infra/user/user.entity';
 import { Message } from 'src/infra/chatRoom/messages.entity';
 import uuid from 'ui7';
 import { MessageResponse } from './response/messageResponse';
+import { JoinRoomRequest } from './request/joinRoomRequest';
+import { PutMessageRequest } from './request/putMessageRequest';
+import { EditMessageRequest } from './request/editMessageRequest';
+import { ReaveRoomRequest } from './request/reaveRoomRequest';
+import { RoomUpdateResponse, UpdateType } from './response/roomUpdateResponse';
 
 @WebSocketGateway(Number(process.env.WEB_SOCKET_PORT) | 3001, {
   cors: { origin: '*' },
@@ -38,10 +43,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('joinRoom')
-  async handleJoinRoom(
-    socket: Socket,
-    { roomId, userId }: { roomId: string; userId: string },
-  ) {
+  async handleJoinRoom(socket: Socket, req: JoinRoomRequest) {
+    const { roomId, userId } = req;
     const chatRoom = await this.chatRoomRepository.findOne({
       where: { id: roomId },
       relations: ['members'],
@@ -92,14 +95,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('putMessage')
-  async handlePutMessage(
-    socket: Socket,
-    {
-      roomId,
-      userId,
-      content,
-    }: { roomId: string; userId: string; content: string },
-  ) {
+  async handlePutMessage(socket: Socket, req: PutMessageRequest) {
+    const { roomId, userId, content } = req;
     console.log('putMessage', content);
     const user = await this.userRepository.findOne({ where: { id: userId } });
     const chatRoom = await this.chatRoomRepository.findOne({
@@ -128,15 +125,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('editMessage')
-  async handleEditMessage(
-    socket: Socket,
-    {
-      roomId,
-      userId,
-      content,
-      messageId,
-    }: { roomId: string; userId: string; content: string; messageId: string },
-  ) {
+  async handleEditMessage(socket: Socket, req: EditMessageRequest) {
+    const { roomId, userId, content, messageId } = req;
     const message = await this.messageRepository.findOne({
       where: { id: messageId },
       relations: ['user', 'chatRoom'],
@@ -164,10 +154,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('leaveRoom')
-  async handleLeaveRoom(
-    socket: Socket,
-    { roomId, userId }: { roomId: string; userId: string },
-  ) {
+  async handleLeaveRoom(socket: Socket, req: ReaveRoomRequest) {
+    const { roomId, userId } = req;
     socket.leave(roomId.toString());
     const chatRoom = await this.chatRoomRepository.findOne({
       where: { id: roomId },
