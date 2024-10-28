@@ -16,9 +16,8 @@
 ### containers
 
 - `docker compose up` then start app and db container
-- modify container port expose
+- modify container port expose as necessary.
 - apply database schema exec `make migration`
-- Migrations will be executed from the host machine, so please adjust the hostname and port as necessary. It is written in .env.development.local.host
 
 ### api
 
@@ -34,8 +33,9 @@
 ### chat
 
 - you can chat in [index.html](index.html)
-- You cant input nickname and login.
+- You cant input nickname and login.(create new user as well )
 - You can select room and join chatRoom.
+- In chatRoom
   - You can view all past messages within the room.
   - You can edit your own messages.
   - Members who are logged in will be visible as Members.
