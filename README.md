@@ -7,6 +7,8 @@
 
 ## environment
 
+- you need pnpm, make
+
 ### .env file
 
 `cp .env.development.example .env.development.local`
@@ -15,7 +17,7 @@
 
 - `docker compose up` then start app and db container
 - modify container port expose as necessary.
-- apply database schema exec `make migration`
+- execute `make migration`, apply database schema
 
 ### api
 
