@@ -142,6 +142,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       relations: ['user', 'chatRoom'],
     });
     if (message) {
+      if (message.user.id !== userId) {
+        socket.emit('errorMessage', 'You are not the writer of this message');
+        return;
+      }
       message.content = content;
       await this.messageRepository.save(message);
 
