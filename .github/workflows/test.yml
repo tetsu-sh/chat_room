@@ -22,6 +22,8 @@ jobs:
 
       - name: setup
         uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 9.12.0
 
       - name: install
         run: pnpm install
