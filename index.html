@@ -176,6 +176,11 @@
         }
       });
 
+      // error received from the server
+      socket.on('errorMessage', (message) => {
+        alert(message);
+      });
+
       // send message
       document.getElementById('sendButton').addEventListener('click', () => {
         const roomId = document.getElementById('roomId').value;
