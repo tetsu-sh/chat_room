@@ -11,14 +11,8 @@ import { Repository } from 'typeorm';
 import { ChatRoom } from 'src/infra/chatRoom/chatRoom.entity';
 import { User } from 'src/infra/user/user.entity';
 import { Message } from 'src/infra/chatRoom/messages.entity';
-
-export interface MessageObject {
-  nickName: string;
-  content: string;
-  id: string;
-  userId: string;
-  roomId: string;
-}
+import uuid from 'ui7';
+import { MessageResponse } from './response/messageResponse';
 
 @WebSocketGateway(Number(process.env.WEB_SOCKET_PORT) | 3001, {
   cors: { origin: '*' },
@@ -76,10 +70,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         socket.emit('roomData', {
           members: chatRoom.members,
           messages: messages.map(
-            (message): MessageObject => ({
+            (message): MessageResponse => ({
+              id: message.id,
               nickName: message.user.nickName,
               content: message.content,
-              id: message.id,
               userId: message.user.id,
               roomId: message.chatRoom.id,
             }),
@@ -111,6 +105,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.emit('errorMessage', 'User or room not found');
     }
     const newMessage = this.messageRepository.create({
+      id: uuid(),
       content: content,
       chatRoom: { id: roomId },
       user: { id: userId },
@@ -118,10 +113,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.messageRepository.save(newMessage);
 
     // send message to only members in the room
-    const messageToSend: MessageObject = {
+    const messageToSend: MessageResponse = {
+      id: newMessage.id,
       nickName: user.nickName,
       content: content,
-      id: newMessage.id,
       userId: userId,
       roomId: roomId,
     };
@@ -151,10 +146,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.messageRepository.save(message);
 
       // send updated message to only members in the room
-      const messageToSend: MessageObject = {
+      const messageToSend: MessageResponse = {
+        id: messageId,
         nickName: message.user.nickName,
         content: content,
-        id: messageId,
         userId: message.user.id,
         roomId: message.chatRoom.id,
       };
