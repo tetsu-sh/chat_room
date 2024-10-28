@@ -28,5 +28,8 @@ jobs:
       - name: up
         run: docker compose up -d
 
+      - name: check format
+        run: make check-format
+
       - name: test
         run: make testing
