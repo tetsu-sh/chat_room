@@ -8,9 +8,9 @@ import {
 import { Server, Socket } from 'socket.io';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ChatRoom } from '../chatRoom/chatRoom.entity';
-import { User } from '../user/user.entity';
-import { Message } from '../chatRoom/messages.entity';
+import { ChatRoom } from 'src/infra/chatRoom/chatRoom.entity';
+import { User } from 'src/infra/user/user.entity';
+import { Message } from 'src/infra/chatRoom/messages.entity';
 
 export interface MessageObject {
   nickName: string;
