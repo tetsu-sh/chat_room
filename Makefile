@@ -10,4 +10,4 @@ migration-gen:
 refresh-local-db:
 	echo 'DROP DATABASE chat_app; CREATE DATABASE chat_app' | mysql -u kuroneko -ppassword --database chat_app -h 127.0.0.1 -P 3406
 testing:
-	pnpm test:e2e --runInBand --forceExit --detectOpenHandles
+	docker compose exec app pnpm test:e2e --runInBand --forceExit --detectOpenHandles
