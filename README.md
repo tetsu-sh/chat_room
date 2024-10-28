@@ -50,8 +50,10 @@
 
 
 ### testing
-- only e2e test
 
-`make testing`
+- only e2e test
+  `cp env.test.example env.test.local`
+  `make testing`
+- app, db container will be used , so you need to do docker compose up
 
 - When parallel execution is used, the test fails due to data inconsistency because of the use of databases. Therefore, test one by one.
