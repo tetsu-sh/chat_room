@@ -48,7 +48,6 @@
 - Only the owner can delete.
 - Considering the increase in data volume, including messages, and the complexity of the code logic, I designed the system to use archive tables for chatRooms and messages, and the deletion process will be transitioned to those tables.
 
-
 ### testing
 
 - only e2e test
