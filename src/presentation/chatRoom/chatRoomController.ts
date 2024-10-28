@@ -23,12 +23,12 @@ export class ChatRoomController {
     return await this.chatRoomUsecase.listRooms();
   }
 
-  @Get(':id/members') // ルームIDに基づいてメンバーを取得
+  @Get(':id/members')
   async getRoomMembers(@Param('id') roomId: string): Promise<User[]> {
     return await this.chatRoomUsecase.getRoomMembers(roomId);
   }
 
-  @Delete() // チャットルームを削除
+  @Delete()
   async deleteChatRoom(@Body() body: DeleteChatRoomRequest) {
     await this.chatRoomUsecase.deleteChatRoom(body.userId, body.roomId);
   }

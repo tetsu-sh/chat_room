@@ -54,6 +54,14 @@ export class ChatRoomUsecase {
     return await this.chatRoomRepository.find();
   }
 
+  /**
+   *
+   * @param roomId - ID of the chat room
+   * @returns {Promise<User[]>}
+   *
+   * @description
+   * Get all members of the chat room
+   */
   async getRoomMembers(roomId: string): Promise<User[]> {
     const chatRoom = await this.chatRoomRepository.findOne({
       where: { id: roomId },
@@ -62,6 +70,19 @@ export class ChatRoomUsecase {
     return chatRoom.members;
   }
 
+  /**
+   * Delete a chat room
+   *
+   * @param userId - ID of the user requesting deletion
+   * @param roomId - ID of the chat room to be deleted
+   * @throws {HttpException}
+   *  - FORBIDDEN: When user is not the room owner
+   *  - UNPROCESSABLE_ENTITY: When room cannot be deleted due to existing members
+   * @returns {Promise<void>}
+   *
+   * @description
+   * logical deletion to transfer data to archive table
+   */
   async deleteChatRoom(userId: string, roomId: string): Promise<void> {
     const chatRoom = await this.chatRoomRepository.findOne({
       where: { id: roomId },
