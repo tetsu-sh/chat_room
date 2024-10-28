@@ -11,6 +11,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - run: corepack enable
+      - name: setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: install
+        run: pnpm install --frozen-lockfile
 
       - name: env
         run: |
@@ -19,17 +27,6 @@ jobs:
 
       - name: up
         run: docker compose up -d
-
-      - run: corepack enable
-
-      - name: setup
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - name: install
-        run: pnpm install --frozen-lockfile
 
       - name: test
         run: make testing
