@@ -9,9 +9,15 @@
 
 - you need pnpm, make
 
+```bash
+pnpm install
+```
+
 ### .env file
 
-`cp .env.development.example .env.development.local`
+```bash
+cp .env.development.example .env.development.local
+```
 
 ### containers
 
@@ -50,8 +56,15 @@ Chat Features in [index.html](index.html)
 ### testing
 
 - only e2e test
-  `cp env.test.example env.test.local`
-  `make testing`
+
+```
+cp env.test.example env.test.local
+```
+
+```
+make testing
+```
+
 - app, db container will be used , so you need to do docker compose up
 
 - When parallel execution is used, the test fails due to data inconsistency because of the use of databases. Therefore, test one by one.
