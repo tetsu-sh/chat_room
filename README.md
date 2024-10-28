@@ -32,13 +32,14 @@
 
 ### chat
 
-- you can chat in [index.html](index.html)
-- You cant input nickname and login.(create new user as well )
-- You can select room and join chatRoom.
-- In chatRoom
-  - You can view all past messages within the room.
-  - You can edit your own messages.
-  - Members who are logged in will be visible as Members.
+Chat Features in [index.html](index.html)
+
+- Enter your nickname to login or create a new account
+- Browse and join available chat rooms
+- Inside chat rooms:
+  - Access complete message history
+  - Edit your own messages
+  - See currently active members
 
 ### design
 
