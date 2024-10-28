@@ -29,7 +29,7 @@ jobs:
         run: docker compose up -d
 
       - name: check format
-        run: make check-format
+        run: make check
 
       - name: test
         run: make testing
