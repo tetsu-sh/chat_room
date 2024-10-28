@@ -11,8 +11,6 @@
 
 `cp .env.development.example .env.development.local`
 
-`cp .env.development.host.example .env.development.host.local`
-
 ### containers
 
 - `docker compose up` then start app and db container
