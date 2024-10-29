@@ -4,7 +4,7 @@ import { CreateChatRoomRequest } from './request/createChatRoomRequest';
 import { CreateChatRoomResponse } from './response/createChatRoomResponse';
 import { chatRoomResponse } from './response/roomResponse';
 import { DeleteChatRoomRequest } from './request/deleteChatRoomRequest';
-import { User } from 'src/infra/user/user.entity';
+import { UserResponse } from './response/userResponse';
 
 @Controller('chatRoom')
 export class ChatRoomController {
@@ -24,7 +24,7 @@ export class ChatRoomController {
   }
 
   @Get(':id/members')
-  async getRoomMembers(@Param('id') roomId: string): Promise<User[]> {
+  async getRoomMembers(@Param('id') roomId: string): Promise<UserResponse[]> {
     return await this.chatRoomUsecase.getRoomMembers(roomId);
   }
 
