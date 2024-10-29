@@ -107,7 +107,7 @@ export class ChatRoomUsecase {
     await this.archiveChatRoom(chatRoom);
   }
 
-  async archiveChatRoom(chatRoom: ChatRoom): Promise<void> {
+  private async archiveChatRoom(chatRoom: ChatRoom): Promise<void> {
     // Logical deletion with data migration to archive table
 
     const messages = await this.messageRepository.find({
