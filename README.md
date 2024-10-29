@@ -1,9 +1,11 @@
+# realtime chat app
+
 ## technologies
 
 - Typescript
 - Nestjs
-- TypeOrm
-- Socket.io
+- TypeOrm(Mysql)
+- Socket.io, nestjs/websockets
 
 ## environment
 
@@ -68,3 +70,7 @@ make testing
 - app, db container will be used , so you need to do docker compose up
 
 - When parallel execution is used, the test fails due to data inconsistency because of the use of databases. Therefore, test one by one.
+
+### ci
+
+- check format and run testing with push
